@@ -1,0 +1,4 @@
+location {{ nginx_location.location }} {
+    include {{ nginx_extra_config_dir | quote }}/proxy.conf;
+    proxy_pass {{ nginx_location.host }};
+}

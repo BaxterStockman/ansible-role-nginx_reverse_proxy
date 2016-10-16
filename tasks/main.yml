@@ -1,0 +1,40 @@
+---
+# tasks file for ansible-role-my_nginx_reverse_proxy_server
+- name: main | install nginx
+  package:
+    name: nginx
+    state: present
+
+- name: main | create nginx directories
+  file:
+    path: '{{ nginx_directory_created }}'
+    state: directory
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+  loop_control:
+    loop_var: nginx_directory_created
+  with_items:
+    - '{{ nginx_proxy_config_file | dirname }}'
+    - '{{ nginx_locations_available_dir }}'
+    - '{{ nginx_locations_enabled_dir }}'
+    - '{{ nginx_ssl_dir }}'
+
+- name: main | template configuration file
+  template:
+    src: nginx.conf.j2
+    dest: '{{ nginx_config_file }}'
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+
+- name: main | copy proxy configuration file
+  copy:
+    src: proxy.conf
+    dest: '{{ nginx_proxy_config_file }}'
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+
+- name: main | include location templating tasks
+  include: location.yml
+  loop_control:
+    loop_var: nginx_location
+  with_items: '{{ nginx_locations }}'

@@ -1,0 +1,12 @@
+---
+- hosts: all
+  roles:
+    # Role is really called ansible-role-my_nginx_reverse_proxy_server; this is just a way to load it that is agnostic
+    # about the name of the directory where the role lives.
+    - role: '{{ [playbook_dir, ".."] | join("/") | realpath | basename }}'
+      nginx_locations:
+        - location: '^~ foobar'
+          host: 'http://localhost:8181'
+        - location: '/ansible-test'
+          host: 'http://ansible-test:5000'
+      nginx_use_ssl: no

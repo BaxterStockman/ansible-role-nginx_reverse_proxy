@@ -1,0 +1,19 @@
+- name: template | determine location configuration file name
+  set_fact:
+    nginx_location_dest_basename: '{{ nginx_location.name | default(nginx_location.location | regex_findall("[\w\d\-.]+") | join) | quote }}.conf'
+
+- name: template | template location configuration file
+  template:
+    src: location.conf.j2
+    dest: '{{ nginx_locations_available_dir }}/{{ nginx_location_dest_basename }}'
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+
+- name: template | link template configuration file into enabled locations directory
+  file:
+    src: '{{ nginx_locations_available_dir }}/{{ nginx_location_dest_basename }}'
+    dest: '{{ nginx_locations_enabled_dir }}/{{ nginx_location_dest_basename }}'
+    state: link
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+  when: nginx_location.enabled | default("yes") | bool
