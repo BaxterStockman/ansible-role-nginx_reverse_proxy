@@ -1,7 +1,7 @@
 galaxy_info:
   author: Matt Schreiber
   description: Set up NGINX to serve as a reverse proxy
-  license: BSD
+  license: MIT
   min_ansible_version: 2.1
   galaxy_tags:
     - nginx
