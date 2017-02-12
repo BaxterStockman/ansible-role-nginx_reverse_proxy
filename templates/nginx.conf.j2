@@ -1,4 +1,5 @@
 #jinja2: lstrip_blocks: True
+
 #user http;
 
 worker_processes  4;
@@ -14,8 +15,8 @@ events {
 }
 
 http {
-    #include /etc/nginx/conf.d/*.conf;
-    #include /etc/nginx/sites-enabled/*.conf;
+    #include {{ nginx_extra_config_dir }}/*.conf;
+    #include {{ nginx_sites_enabled_dir }}/*.conf;
 
     include       mime.types;
     default_type  application/octet-stream;
@@ -43,72 +44,5 @@ http {
     gzip_comp_level 2;
     gzip_types      text/css application/x-javascript;
 
-{% if nginx_use_ssl | default("yes") | bool %}
-    server {
-        listen       80;
-        server_name  {{ nginx_server_name | mandatory }};
-
-        # Deals with redirects to 'localhost'
-        #server_name_in_redirect off;
-        #port_in_redirect        off;
-
-        # Enforce HTTPS
-        return 301 https://$server_name$request_uri;
-    }
-
-{% endif %}
-    server {
-{% if nginx_use_ssl | default("yes") | bool %}
-        listen      443 ssl;
-
-        # SSL certs and keys
-        ssl                         on;
-        ssl_certificate             {{ nginx_ssl_cert }};
-        ssl_certificate_key         {{ nginx_ssl_key }};
-        ssl_session_cache           shared:SSL:1m;
-        ssl_session_timeout         5m;
-        ssl_ciphers                 HIGH:!aNULL:!MD5;
-        ssl_prefer_server_ciphers   on;
-{% else %}
-        listen      80;
-{% endif %}
-        server_name {{ nginx_server_name | mandatory }};
-
-        # Deals with redirects to 'localhost'
-        server_name_in_redirect off;
-        port_in_redirect        off;
-
-        # This is to avoid Request Entity Too Large error
-        client_max_body_size    10G;
-        fastcgi_buffers         64 4k;
-
-        location / {
-            root        /usr/share/nginx/html;
-            try_files   $uri $uri/ index.php;
-        }
-
-        # Redirect server error pages to the static page /50x.html
-        error_page   500 502 503 504  /50x.html;
-        location = /50x.html {
-            root   /usr/share/nginx/html;
-        }
-
-        # Apache-style userdirs
-        location ~ ^/~(.+?)(/.*)?$ {
-            alias       /home/$1/public_html$2;
-            try_files   $uri $uri/ index.php;
-            autoindex   on;
-        }
-
-        # PHP files
-        location ~ \.php {
-            try_files               $uri = 404;
-            include                 /etc/nginx/fastcgi.conf;
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-            fastcgi_pass            unix:/var/run/php-fpm/php-fpm.sock;
-            fastcgi_param           htaccessWorking true;
-        }
-
-        include /etc/nginx/locations-enabled/*.conf;
-    }
+    include {{ nginx_sites_enabled_dir }}/*.conf;
 }

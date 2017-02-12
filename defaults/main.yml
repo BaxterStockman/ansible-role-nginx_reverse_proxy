@@ -1,5 +1,12 @@
 ---
-# defaults file for ansible-role-my_nginx_reverse_proxy_server
+# defaults file for ansible-role-nginx_reverse_proxy
+
+# Owner of the NGINX configuration directories and files
+nginx_owner: root
+nginx_group: root
+
+# Custom service file
+nginx_systemd_custom_config: /etc/systemd/system/nginx.service.d/custom.conf
 
 # Main configuration file
 nginx_config_file: /etc/nginx/nginx.conf
@@ -8,16 +15,11 @@ nginx_config_file: /etc/nginx/nginx.conf
 nginx_config_dir: '{{ nginx_config_file | dirname }}'
 nginx_ssl_dir: '{{ nginx_config_dir }}/ssl'
 nginx_extra_config_dir: '{{ nginx_config_dir }}/conf.d'
+nginx_server_config_file: '{{ nginx_extra_config_dir }}/server.conf'
 nginx_proxy_config_file: '{{ nginx_extra_config_dir }}/proxy.conf'
-nginx_locations_enabled_dir: '{{ nginx_config_dir }}/locations-enabled'
-nginx_locations_available_dir: '{{ nginx_config_dir }}/locations-available'
 
 # Used in server { ... } blocks
 nginx_server_name: default
-
-# Owner of the NGINX configuration directories and files
-nginx_owner: root
-nginx_group: root
 
 # SSL certs and keys
 nginx_ssl_key: '{{ nginx_ssl_dir }}/{{ nginx_server_name }}.key'
@@ -25,6 +27,9 @@ nginx_ssl_cert: '{{ nginx_ssl_dir }}/{{ nginx_server_name }}.crt'
 
 # Enable or disable SSL in the main server block
 nginx_use_ssl: yes
+
+nginx_locations_enabled_dir: '{{ nginx_config_dir }}/locations-enabled'
+nginx_locations_available_dir: '{{ nginx_config_dir }}/locations-available'
 
 # A list of hashes of the form
 #   - location: '^~ somepath'   # See http://nginx.org/en/docs/http/ngx_http_core_module.html#location
@@ -36,3 +41,23 @@ nginx_use_ssl: yes
 #                               # into the locations-enabled directory.  Defaults
 #                               # to `yes'.
 nginx_locations: []
+
+nginx_sites_enabled_dir: '{{ nginx_config_dir }}/sites-enabled'
+nginx_sites_available_dir: '{{ nginx_config_dir }}/sites-available'
+
+# A list of hashes of the form:
+# - server_name:              # See http://nginx.org/en/docs/http/server_names.html
+#     - foo                   # Takes a string or list of strings
+#     - foo.com
+#   enabled: yes              # Whether to symlink the location configuration
+#                             # into the sites-enabled directory.  Defaults
+#                             # to `yes'.
+#   includes: /path/to.conf   # Other configurations to include.  Takes a path or
+#                             # list of paths.
+#   use_ssl: yes              # See the description for `nginx_use_ssl`,
+#   ssl_dir: /path/to/dir     # `nginx_ssl_dir`, `nginx_ssl_key`, and
+#   ssl_key: /path/to.key     # `nginx_ssl_cert`.
+#   ssl_cert: /path/to.crt
+nginx_sites: []
+
+nginx_pkg_name: nginx

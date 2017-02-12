@@ -1,16 +1,15 @@
-Ansible Role - My NGINX Reverse Proxy Server
-============================================
+# Ansible Role - My NGINX Reverse Proxy Server
 
 An Ansible role for setting up NGINX to serve as a reverse proxy.  Settings are
 fairly specific to my needs.
 
-Requirements
-------------
+## Requirements
 
-None.
+This role uses the `package` module, so you should ensure that
+`ansible_pkg_mgr` is defined (probably by enabling fact gathering on the play
+in which this role is applied).
 
-Role Variables
---------------
+## Role Variables
 
 - `nginx_config_file`:  Path to the main NGINX configuration file.  Defaults to
   `/etc/nginx/nginx.conf`.
@@ -29,10 +28,13 @@ Role Variables
   server.  Defaults to `yes`.
 - `nginx_extra_config_dir`:  Directory where extra configurations files are
   created.  Defaults to `{{ nginx_config_dir }}/conf.d`.
-- `nginx_proxy_config_file`:  Configuration file with settings appropriate to
-  include in `location` blocks for reverse proxies.  Specifies, among other
-  things, the content of certain headers in forwarded requests.  Defaults to
-  `{{ nginx_extra_config_dir }}/proxy.conf`.
+- `nginx_server_config_file`:  Destination of configuration file with settings
+  appropriate to include in `server` blocks. Defaults to
+  `{{ nginx_extra_config_dir }}/server.conf`.
+- `nginx_proxy_config_file`:  Destination of configuration file with settings
+  appropriate to include in `location` blocks for reverse proxies.  Specifies,
+  among other things, the content of certain headers in forwarded requests.
+  Defaults to `{{ nginx_extra_config_dir }}/proxy.conf`.
 - `nginx_locations_available_dir`:  Directory where configuration files
   containing `location` blocks are stored.  Defaults to
   `{{ nginx_config_dir }}/locations-available`.
@@ -41,7 +43,8 @@ Role Variables
   `enabled` in the `nginx_locations` list (see below).  Defaults to
   `{{ nginx_config_dir }}/locations-enabled`.
 - `nginx_server_name`:  Argument to the `server` directive in the main `server`
-  block of the NGINX configuration file.  Defaults to `default`.
+  block of the NGINX configuration file.  Can be a string or list of strings.
+  Defaults to `default`.
 - `nginx_owner`:  User that owns the NGINX configuration directory and
   configuration files.  Defaults to `root`.
 - `nginx_group`:  Group that owns the NGINX configuration directory and
@@ -59,26 +62,45 @@ Role Variables
                             # to `yes'.
 ```
 
-Dependencies
-------------
+- `nginx_sites_available_dir`:  Directory where configuration files
+  containing `server` blocks are stored.  Defaults to
+  `{{ nginx_config_dir }}/sites-available`.
+- `nginx_sites_enabled_dir`:  Directory containing symlinks to each `server`
+  file in `nginx_sites_available_dir` that are marked as `enabled` in the
+  `nginx_sites` list (see below).  Defaults to `{{ nginx_config_dir }}/sites-enabled`.
+- `nginx_sites`:  A list of hashes of the form:
+
+```yaml
+- name: mysite              # Optional - will be used to name the site
+                            # configuration file; in this case it would be
+                            # `{{ nginx_sites_available_dir }}/mysite.conf'
+- server_name:              # See http://nginx.org/en/docs/http/server_names.html
+    - foo                   # Takes a string or list of strings
+    - foo.com
+  enabled: yes              # Whether to symlink the location configuration
+                            # into the sites-enabled directory.  Defaults
+                            # to `yes'.
+  includes: /path/to.conf   # Other configurations to include.  Takes a path or
+                            # list of paths.
+  use_ssl: yes              # See the description for `nginx_use_ssl`,
+  ssl_dir: /path/to/dir     # `nginx_ssl_dir`, `nginx_ssl_key`, and
+  ssl_key: /path/to.key     # `nginx_ssl_cert`.
+  ssl_cert: /path/to.crt
+```
+
+- `nginx_pkg_name`: the name of the NGINX package as provided by the package
+  manager of the target system.  Defaults to `nginx`.
+
+## Dependencies
 
 None.
 
-Example Playbook
-----------------
+## Example Playbook
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
+## License
 
 MIT
 
-Author Information
-------------------
+## Author Information
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Matt Schreiber <schreibah@gmail.com>
