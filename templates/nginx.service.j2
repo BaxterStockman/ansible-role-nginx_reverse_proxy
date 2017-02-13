@@ -1,0 +1,4 @@
+{{ ansible_managed | comment }}
+[Unit]
+# We plan to proxy to machines, so wait until they are up
+After=network.target machines.target

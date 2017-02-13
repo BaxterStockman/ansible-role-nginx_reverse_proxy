@@ -1,7 +1,6 @@
-# Ansible Role - My NGINX Reverse Proxy Server
+# Ansible Role - NGINX Reverse Proxy
 
-An Ansible role for setting up NGINX to serve as a reverse proxy.  Settings are
-fairly specific to my needs.
+An Ansible role for setting up NGINX to serve as a reverse proxy.
 
 ## Requirements
 
@@ -15,6 +14,9 @@ in which this role is applied).
   `/etc/nginx/nginx.conf`.
 - `nginx_config_dir`: Path to the NGINX configuration directory.  Defaults to
   `{{ nginx_config_file | dirname }}`.
+- `nginx_server_name`:  Argument to the `server` directive in the main `server`
+  block of the NGINX configuration file.  Can be a string or list of strings.
+  Defaults to `default`.
 - `nginx_ssl_dir`:  Directory used to store SSL certificates and keys.
   Defaults to `{{ nginx_config_dir }}/ssl`.  *NOTE* This role does not manage
   SSL configuration.
@@ -35,20 +37,17 @@ in which this role is applied).
   appropriate to include in `location` blocks for reverse proxies.  Specifies,
   among other things, the content of certain headers in forwarded requests.
   Defaults to `{{ nginx_extra_config_dir }}/proxy.conf`.
+- `nginx_owner`:  User that owns the NGINX configuration directory and
+  configuration files.  Defaults to `root`.
+- `nginx_group`:  Group that owns the NGINX configuration directory and
+  configuration files.  Defaults to `root`.
 - `nginx_locations_available_dir`:  Directory where configuration files
-  containing `location` blocks are stored.  Defaults to
+  containing `location` blocks will be placed.  Defaults to
   `{{ nginx_config_dir }}/locations-available`.
 - `nginx_locations_enabled_dir`:  Directory containing symlinks to each
   `location` file in `nginx_locations_available_dir` that are marked as
   `enabled` in the `nginx_locations` list (see below).  Defaults to
   `{{ nginx_config_dir }}/locations-enabled`.
-- `nginx_server_name`:  Argument to the `server` directive in the main `server`
-  block of the NGINX configuration file.  Can be a string or list of strings.
-  Defaults to `default`.
-- `nginx_owner`:  User that owns the NGINX configuration directory and
-  configuration files.  Defaults to `root`.
-- `nginx_group`:  Group that owns the NGINX configuration directory and
-  configuration files.  Defaults to `root`.
 - `nginx_locations`:  A list of hashes of the form:
 
 ```yaml
@@ -63,7 +62,7 @@ in which this role is applied).
 ```
 
 - `nginx_sites_available_dir`:  Directory where configuration files
-  containing `server` blocks are stored.  Defaults to
+  containing `server` blocks will be placed.  Defaults to
   `{{ nginx_config_dir }}/sites-available`.
 - `nginx_sites_enabled_dir`:  Directory containing symlinks to each `server`
   file in `nginx_sites_available_dir` that are marked as `enabled` in the

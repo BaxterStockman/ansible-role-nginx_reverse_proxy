@@ -1,0 +1,28 @@
+- name: site | determine site configuration file name
+  set_fact:
+    nginx_site_dest_basename: '{{
+        nginx_site.name
+      | default(
+            nginx_site.server_name is string
+          | ternary([nginx_site.server_name], nginx_site.server_name)
+          | first
+          | regex_findall("[\w\d\-.]+")
+          | join
+      )
+      | quote }}.conf'
+
+- name: site | template site configuration file
+  template:
+    src: site.conf.j2
+    dest: '{{ nginx_sites_available_dir }}/{{ nginx_site_dest_basename }}'
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+
+- name: site | link template configuration file into enabled sites directory
+  file:
+    src: '{{ nginx_sites_available_dir }}/{{ nginx_site_dest_basename }}'
+    dest: '{{ nginx_sites_enabled_dir }}/{{ nginx_site_dest_basename }}'
+    state: link
+    owner: '{{ nginx_owner }}'
+    group: '{{ nginx_group }}'
+  when: nginx_site.enabled | default("yes") | bool

@@ -1,0 +1,80 @@
+#jinja2: lstrip_blocks: True
+{%- set server_names = (nginx_site.server_name | mandatory) is string | ternary([nginx_site.server_name], nginx_site.server_name) -%}
+
+{% if nginx_site.use_ssl | default(nginx_use_ssl) | bool %}
+server {
+    listen       80;
+    server_name  {{ server_names | join }};
+
+    # Deals with redirects to 'localhost'
+    #server_name_in_redirect off;
+    #port_in_redirect        off;
+
+    # Enforce HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+{% endif %}
+server {
+    server_name {{ server_names | join(' ') }};
+{% if use_ssl | default(nginx_use_ssl) | bool %}
+    listen      443 ssl;
+
+    # SSL certs and keys
+    ssl                         on;
+    ssl_certificate             {{ nginx_site.ssl_cert | default([nginx_site.ssl_dir | default(nginx_ssl_dir), ((server_names | first) ~ '.crt')] | join('/')) }};
+    ssl_certificate_key         {{ nginx_site.ssl_key | default([nginx_site.ssl_dir | default(nginx_ssl_dir), ((server_names | first) ~ '.key')] | join('/')) }};
+    ssl_session_cache           shared:SSL:1m;
+    ssl_session_timeout         5m;
+    ssl_ciphers                 HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers   on;
+{% else %}
+    listen      80;
+{% endif %}
+
+    include {{ nginx_extra_config_dir }}/server.conf;
+
+{% if nginx_site.include_default_locations | default('no') | bool %}
+    location / {
+        root        /usr/share/nginx/html;
+        try_files   $uri $uri/ index.php;
+    }
+
+    # Redirect server error pages to the static page /50x.html
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # Apache-style userdirs
+    location ~ ^/~(.+?)(/.*)?$ {
+        alias       /home/$1/public_html$2;
+        try_files   $uri $uri/ index.php;
+        autoindex   on;
+    }
+
+    # PHP files
+    location ~ \.php {
+        try_files               $uri = 404;
+        include                 {{ nginx_config_dir | quote }}/fastcgi.conf;
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        fastcgi_pass            unix:/var/run/php-fpm/php-fpm.sock;
+        fastcgi_param           htaccessWorking true;
+    }
+{% endif %}
+
+{% if 'locations' in nginx_site -%}
+    {%- for location in nginx_site.locations %}
+    location {{ location.location | default('/') }} {
+        include     {{ nginx_extra_config_dir | quote }}/proxy.conf;
+        proxy_pass  {{ location.host }};
+    }
+    {% endfor -%}
+{%- endif %}
+
+{% if 'includes' in nginx_site -%}
+    {%- for inc in (nginx_site.includes is string | ternary([nginx_site.includes], nginx_site.includes)) %}
+    include {{ inc | quote }};
+    {% endfor -%}
+{%- endif %}
+}
